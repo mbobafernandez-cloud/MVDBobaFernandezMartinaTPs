@@ -1,28 +1,52 @@
+## Introducción
+
+Este trabajo práctico tiene como objetivo analizar la evolución de la penetración de internet a nivel global durante la última década. Buscamos validar si las regiones de ingresos bajos han experimentado un crecimiento porcentual superior a las de ingresos altos, a pesar de las brechas estructurales existentes.
+
+## Configuración y Funciones de Carga
+
+Para garantizar la reproducibilidad del análisis, cargamos la librería `tidyverse` y definimos una función personalizada para la lectura de datos. Esta función no solo carga el archivo, sino que también informa sobre la estructura de las columnas detectadas.
 
 ```{r}
 # Cargamos la librería fundamental
+install.packages("tidyverse")
 library(tidyverse)
 
-# --- FUNCIÓN ---
-# Modificamos la función para que pueda saltear filas (skip) si el CSV tiene títulos arriba
 cargar_datos <- function(ruta, filas_a_saltear = 0) {
   df <- read_csv(ruta, skip = filas_a_saltear, show_col_types = FALSE)
   print(paste("Las columnas del archivo", ruta, "son:"))
   print(names(df))
   return(df)
 }
+```
 
-# definimos las rutas relativas 
+# Modificamos la función para que pueda saltear filas (skip) si el CSV tiene títulos arriba
+
+definimos las rutas relativas
+
+```{r}
 ruta_ind <- "../data/internet_users_world_wide.csv"
 ruta_meta <- "../data/metadata_countries_internet_users.csv"
+```
 
-# Usamos la función. 
-# El archivo del Banco Mundial suele tener 4 filas de texto antes de la tabla, así que las salteamos (Tuve que buscar esto revisando los datos y revisando porqué daba error si no lo hacia :) )
+# Usamos la función.
+
+El archivo del Banco Mundial suele tener 4 filas de texto antes de la tabla, así que las salteamos (Tuve que buscar esto revisando los datos y revisando porqué daba error si no lo hacia :) )
+
+```{r}
 df_ind_raw <- cargar_datos(ruta_ind, filas_a_saltear = 4)
-# La metadata está bien estructurada, no salteamos nada.
-df_meta_raw <- cargar_datos(ruta_meta)
+```
 
-# --- NORMALIZACIÓN ---
+La metadata está bien estructurada, no salteamos nada.
+
+```{r}
+df_meta_raw <- cargar_datos(ruta_meta)
+```
+
+# NORMALIZACIÓN
+
+El primer paso del procesamiento consiste en normalizar los nombres de las columnas. Esto es fundamental para evitar errores por espacios o caracteres especiales y para asegurar que la unión de las tablas sea fluida.
+
+```{r}
 df_ind <- df_ind_raw |>
   rename(
     country_name = `Country Name`,
@@ -37,8 +61,13 @@ df_meta <- df_meta_raw |>
     region = Region,
     income_group = IncomeGroup #
   )
+```
 
-# --- PIVOTEO ---
+# PIVOTEO
+
+Los datos originales se encuentran en formato "Wide", con una columna por cada año. Para poder realizar agregaciones temporales y facilitar el análisis estadístico, transformamos la tabla a formato "Long", concentrando todos los valores de penetración en una única variable.
+
+```{r}
 df_long <- df_ind |>
   pivot_longer(
     cols = -c(country_name, country_code, indicator_name, indicator_code),
@@ -46,34 +75,62 @@ df_long <- df_ind |>
     values_to = "valor"
   ) |>
   mutate(year = as.integer(year))
+```
 
-# --- TRATAMIENTO DE NAs ---
+# TRATAMIENTO DE NAs
+
+Decidimos filtrar los registros sin datos para trabajar solo con observaciones reales
+
+```{r}
 df_clean <- df_long |>
   filter(!is.na(valor))
+```
 
-# --- CRUCE DE DATOS ---
+# CRUCE DE DATOS
+
+Realizamos un left_join para asociar a cada país su respectiva clasificación de ingresos. Filtramos los registros que no poseen un grupo de ingresos asignado para que no afecten los promedios finales.
+
+```{r}
 df_join <- df_clean |>
   left_join(df_meta, by = "country_code") |>
   filter(!is.na(income_group))
+```
 
-# --- AGREGACIÓN ---
+# AGREGACIÓN
+
+Agrupamos los datos para calcular el valor promedio de penetración por año y nivel de ingreso. Utilizamos factores para asegurar que los grupos de ingresos mantengan un orden jerárquico lógico en las tablas y gráficos resultantes.
+
+```{r}
 df_agg <- df_join |>
   filter(year >= 2013 & year <= 2023) |>
   group_by(year, income_group, indicator_name) |>
   summarize(valor_promedio = mean(valor, na.rm = TRUE), .groups = "drop")
+```
 
-# --- FACTORES ---
+# FACTORES
+
+Definición de jerarquía para el factor
+
+```{r}
 jerarquia_ingresos <- c("Low income", "Lower middle income", "Upper middle income", "High income")
 
 df_agg <- df_agg |>
   mutate(income_group = factor(income_group, levels = jerarquia_ingresos, ordered = TRUE)) |>
   arrange(year, income_group)
+```
 
-# --- ENTREGABLE FINAL ---
+# ENTREGABLE FINAL
+
+Transformamos el resumen estadístico a una tabla comparativa y exportamos el archivo final. Esta tabla permite observar cómo ha evolucionado la brecha digital entre 2013 y 2023.
+
+```{r}
 df_final <- df_agg |>
   pivot_wider(names_from = income_group, values_from = valor_promedio)
+```
 
 # Exportamos el csv
+
+```{r}
 write_csv(df_final, "../output/resultado_hipotesis.csv")
 print("¡Archivo exportado con éxito!")
 
