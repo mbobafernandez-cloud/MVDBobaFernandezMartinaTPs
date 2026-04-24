@@ -25,7 +25,7 @@ Se divide en tres etapas fundamentales:
 ### Recolección de Datos (Web Scraping)
 
 El script `scraping_oea.R` automatiza la descarga de datos.
-Para esto, primero consultamos el archivo `robots.txt` de la OEA, detectando un **Crawl-delay de 3 segundos**, el cual respetamos en el código mediante la función `Sys.sleep()`.
+Para esto, primero consultamos el archivo `robots.txt` de la OEA, detectando un Crawl-delay de 3 segundos, el cual respetamos en el código mediante la función `Sys.sleep()`.
 
 ![](images/clipboard-4009574822.png)
 
@@ -44,7 +44,7 @@ Entra a cada noticia y extrae el ID, el Título (etiqueta `h2`) y el Cuerpo (eti
 
 Guarda los archivos `.html` originales con registro de fecha y una tabla final en formato `.rds`.
 
-### Procesamiento de Texto (NLP)
+### Procesamiento de Texto 
 
 El script `processing.R` se encarga de convertir el texto bruto en datos analizables:
 
