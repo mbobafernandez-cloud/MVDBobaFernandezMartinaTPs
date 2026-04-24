@@ -6,9 +6,9 @@ editor:
     wrap: sentence
 ---
 
-## Trabajo practico N°2 
+## Trabajo practico N°2
 
-##  Introducción e Intención del Análisis
+## Introducción e Intención del Análisis
 
 En el ámbito de las Relaciones Internacionales, los comunicados de prensa son herramientas fundamentales para identificar las prioridades políticas y los focos de conflicto en tiempo real.
 El objetivo de este trabajo es aplicar técnicas de Web Scraping y Procesamiento de Lenguaje Natural (NLP) para analizar de forma masiva y objetiva la comunicación oficial de la Organización de los Estados Americanos (OEA) entre enero y abril de 2026.
@@ -66,13 +66,15 @@ Seleccionamos 5 palabras clave del contexto institucional (*democracia*, *misió
 A continuación, se ejecuta el flujo completo llamando a los scripts externos.
 Este bloque asegura que el análisis sea reproducible desde cero:
 
-\`\`\`{library(here)}
+```{r}
+library(here)
+# Ejecutar cada etapa en orden
+source(here("TP2/scripts/scraping_oea.R"))
+source(here("TP2/scripts/processing.R"))
+source(here("TP2/scripts/metrics_figures.R"))
+```
 
-# Ejecución de los scripts modulares
-
-source(here("TP2/scripts/scraping_oea.R")) source(here("TP2/scripts/processing.R")) source(here("TP2/scripts/metrics_figures.R")) \`\`\`
-
-##Análisis de Resultados e Interpretación
+## Análisis de Resultados e Interpretación
 
 A partir del procesamiento de los comunicados, se generó la siguiente visualización de frecuencias:
 
